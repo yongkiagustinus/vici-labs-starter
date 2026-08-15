@@ -1,0 +1,46 @@
+name: Deploy app (Vercel)
+
+# Production deploy of the full Next.js app to Vercel.
+# REQUIRES these repo secrets (Settings → Secrets and variables → Actions):
+#   VERCEL_TOKEN      – a Vercel access token
+#   VERCEL_ORG_ID     – from `.vercel/project.json` after `vercel link`
+#   VERCEL_PROJECT_ID – from `.vercel/project.json` after `vercel link`
+# The job is skipped automatically until VERCEL_TOKEN is present.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' || vars.ENABLE_VERCEL_DEPLOY == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard — require VERCEL_TOKEN
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "VERCEL_TOKEN not set — skipping Vercel deploy. See README."
+            exit 0
+          fi
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Vercel CLI
+        run: npm i -g vercel@latest
+
+      - name: Pull Vercel env
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+      - name: Build
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}

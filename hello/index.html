@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vici Labs Starter — Hello</title>
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        background: #0a0a0a;
+        color: #ededed;
+      }
+      .card {
+        max-width: 42rem;
+        padding: 3rem;
+        text-align: center;
+      }
+      .badge {
+        display: inline-block;
+        font-size: 0.75rem;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        opacity: 0.6;
+      }
+      h1 { font-size: 2.5rem; margin: 0.5rem 0 1rem; }
+      p { opacity: 0.7; line-height: 1.6; font-size: 1.1rem; }
+      code { background: rgba(255,255,255,0.1); padding: 0.15em 0.4em; border-radius: 4px; }
+      .ok { color: #4ade80; font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <span class="badge">Vici Labs · CI/CD liveness</span>
+      <h1>Hello 👋</h1>
+      <p>
+        This is the deployed <strong>hello environment</strong> for the Vici Labs
+        studio starter template. If you can read this, the
+        <span class="ok">GitHub Actions → Pages</span> pipeline is live and working.
+      </p>
+      <p>
+        The full-stack app (auth, billing, dashboard, <code>/api/hello</code>) lives
+        in the same repo and deploys to Vercel via the included workflow.
+      </p>
+    </div>
+  </body>
+</html>
