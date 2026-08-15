@@ -6,7 +6,7 @@ import type { Config } from "drizzle-kit";
  * Apply:     pnpm db:migrate   (or db:push for prototyping)
  */
 export default {
-  schema: "./src/lib/db/schema.ts",
+  schema: ["./src/lib/db/schema.ts", "./src/lib/db/observability-schema.ts"],
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
