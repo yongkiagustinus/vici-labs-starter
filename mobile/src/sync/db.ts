@@ -1,5 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import type { Account, Transaction } from "@/api/types";
+import type { Account, Bill, Budget, Transaction } from "@/api/types";
 
 /**
  * On-device snapshot persistence (offline-first). We keep the full household
@@ -29,11 +29,21 @@ export interface Snapshot {
   householdId: string | null;
   accounts: Record<string, Account>;
   transactions: Record<string, Transaction>;
+  budgets: Record<string, Budget>;
+  bills: Record<string, Bill>;
   outbox: OutboxOp[];
 }
 
 export function emptySnapshot(): Snapshot {
-  return { cursor: 0, householdId: null, accounts: {}, transactions: {}, outbox: [] };
+  return {
+    cursor: 0,
+    householdId: null,
+    accounts: {},
+    transactions: {},
+    budgets: {},
+    bills: {},
+    outbox: [],
+  };
 }
 
 export async function loadSnapshot(): Promise<Snapshot> {

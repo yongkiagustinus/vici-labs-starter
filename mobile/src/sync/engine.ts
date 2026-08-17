@@ -104,11 +104,21 @@ async function pullDelta(): Promise<{ offline: boolean; unauthorized: boolean; p
   const store = useStore.getState();
   try {
     const res = await api.sync(store.cursor);
+    // Tolerate version skew: an older server may omit budgets/bills entirely.
+    const budgets = res.budgets ?? [];
+    const bills = res.bills ?? [];
     for (const acc of res.accounts) store._applyServerAccount(acc);
     for (const txn of res.transactions) store._applyServerTransaction(txn);
+    for (const budget of budgets) store._applyServerBudget(budget);
+    for (const bill of bills) store._applyServerBill(bill);
     store._set({ householdId: res.householdId, cursor: res.cursor, lastSyncAt: Date.now() });
     await store.persist();
-    return { offline: false, unauthorized: false, pulled: res.accounts.length + res.transactions.length };
+    return {
+      offline: false,
+      unauthorized: false,
+      pulled:
+        res.accounts.length + res.transactions.length + budgets.length + bills.length,
+    };
   } catch (err) {
     if (err instanceof ApiError && err.status === 401) {
       return { offline: false, unauthorized: true, pulled: 0 };

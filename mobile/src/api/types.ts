@@ -54,6 +54,39 @@ export interface Transaction {
   deletedAt: string | null;
 }
 
+export const BILL_RECURRENCES = ["none", "weekly", "monthly", "yearly"] as const;
+export type BillRecurrence = (typeof BILL_RECURRENCES)[number];
+
+export interface Budget {
+  id: string;
+  householdId: string;
+  authorId: string;
+  category: string;
+  limitAmount: number; // minor units
+  currency: string;
+  period: string | null; // "YYYY-MM"; null = recurring every month
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
+export interface Bill {
+  id: string;
+  householdId: string;
+  authorId: string;
+  name: string;
+  amount: number; // minor units
+  currency: string;
+  dueDate: string;
+  recurrence: BillRecurrence;
+  reminderLeadDays: number;
+  paidAmount: number; // minor units paid so far (partial-payment aware)
+  paidAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 export interface Household {
   id: string;
   name: string;
@@ -70,6 +103,8 @@ export interface SyncResponse {
   cursor: number;
   accounts: Account[];
   transactions: Transaction[];
+  budgets: Budget[];
+  bills: Bill[];
   serverTime: number;
 }
 
