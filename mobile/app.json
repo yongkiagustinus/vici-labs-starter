@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "Vici Expense Tracker",
+    "slug": "vici-expense-tracker",
+    "scheme": "viciexpense",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "dev.vincere.viciexpense",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Unlock your household finances with Face ID."
+      }
+    },
+    "android": {
+      "package": "dev.vincere.viciexpense",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B1220"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Unlock your household finances with Face ID."
+        }
+      ],
+      "expo-asset"
+    ],
+    "extra": {
+      "apiBaseUrl": "http://localhost:3000"
+    }
+  }
+}
