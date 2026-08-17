@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import type {
   Account,
+  Bill,
+  Budget,
   CreateAccountInput,
   CreateTransactionInput,
   Transaction,
@@ -57,6 +59,8 @@ interface StoreState extends Snapshot {
   _replaceLocalTransaction: (localId: string, server: Transaction) => void;
   _applyServerAccount: (acc: Account) => void;
   _applyServerTransaction: (txn: Transaction) => void;
+  _applyServerBudget: (budget: Budget) => void;
+  _applyServerBill: (bill: Bill) => void;
   _setOutbox: (outbox: OutboxOp[]) => void;
 }
 
@@ -82,8 +86,17 @@ export const useStore = create<StoreState>((set, get) => ({
   },
 
   persist: async () => {
-    const { cursor, householdId, accounts, transactions, outbox } = get();
-    await saveSnapshot({ cursor, householdId, accounts, transactions, outbox });
+    const { cursor, householdId, accounts, transactions, budgets, bills, outbox } =
+      get();
+    await saveSnapshot({
+      cursor,
+      householdId,
+      accounts,
+      transactions,
+      budgets,
+      bills,
+      outbox,
+    });
   },
 
   addAccount: (input, authorId) => {
@@ -204,6 +217,20 @@ export const useStore = create<StoreState>((set, get) => ({
       return { transactions: { ...s.transactions, [txn.id]: txn } };
     }),
 
+  _applyServerBudget: (budget) =>
+    set((s) => {
+      const cur = s.budgets[budget.id];
+      if (cur && Date.parse(cur.updatedAt) > Date.parse(budget.updatedAt)) return {};
+      return { budgets: { ...s.budgets, [budget.id]: budget } };
+    }),
+
+  _applyServerBill: (bill) =>
+    set((s) => {
+      const cur = s.bills[bill.id];
+      if (cur && Date.parse(cur.updatedAt) > Date.parse(bill.updatedAt)) return {};
+      return { bills: { ...s.bills, [bill.id]: bill } };
+    }),
+
   _setOutbox: (outbox) => set({ outbox }),
 }));
 
@@ -236,6 +263,18 @@ export function selectTransactions(s: StoreState): Transaction[] {
   return Object.values(s.transactions)
     .filter((t) => !t.deletedAt)
     .sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
+}
+
+export function selectBudgets(s: StoreState): Budget[] {
+  return Object.values(s.budgets)
+    .filter((b) => !b.deletedAt)
+    .sort((a, b) => a.category.localeCompare(b.category));
+}
+
+export function selectBills(s: StoreState): Bill[] {
+  return Object.values(s.bills)
+    .filter((b) => !b.deletedAt)
+    .sort((a, b) => Date.parse(a.dueDate) - Date.parse(b.dueDate));
 }
 
 /** Derived account balance = opening + sum of non-deleted txns on that account. */

@@ -113,6 +113,8 @@ export interface SyncDelta {
   cursor: number; // pass back as `since` on the next pull
   accounts: Account[];
   transactions: Transaction[];
+  budgets: Budget[];
+  bills: Bill[];
 }
 
 export interface FinanceRepo {
@@ -534,12 +536,20 @@ const inMemoryRepo: FinanceRepo = {
     const txn = [...memTransactions.values()].filter(
       (t) => t.householdId === householdId && t.updatedAt.getTime() > since
     );
+    const bud = [...memBudgets.values()].filter(
+      (b) => b.householdId === householdId && b.updatedAt.getTime() > since
+    );
+    const bil = [...memBills.values()].filter(
+      (b) => b.householdId === householdId && b.updatedAt.getTime() > since
+    );
     const cursor = Math.max(
       since,
       ...acc.map((a) => a.updatedAt.getTime()),
-      ...txn.map((t) => t.updatedAt.getTime())
+      ...txn.map((t) => t.updatedAt.getTime()),
+      ...bud.map((b) => b.updatedAt.getTime()),
+      ...bil.map((b) => b.updatedAt.getTime())
     );
-    return { cursor, accounts: acc, transactions: txn };
+    return { cursor, accounts: acc, transactions: txn, budgets: bud, bills: bil };
   },
 };
 
@@ -887,7 +897,7 @@ const postgresRepo: FinanceRepo = {
   },
   async changesSince(householdId, since) {
     const sinceDate = new Date(since);
-    const [acc, txn] = await Promise.all([
+    const [acc, txn, bud, bil] = await Promise.all([
       getDb()
         .select()
         .from(accounts)
@@ -906,13 +916,30 @@ const postgresRepo: FinanceRepo = {
             gt(transactions.updatedAt, sinceDate)
           )
         ),
+      getDb()
+        .select()
+        .from(budgets)
+        .where(
+          and(
+            eq(budgets.householdId, householdId),
+            gt(budgets.updatedAt, sinceDate)
+          )
+        ),
+      getDb()
+        .select()
+        .from(bills)
+        .where(
+          and(eq(bills.householdId, householdId), gt(bills.updatedAt, sinceDate))
+        ),
     ]);
     const cursor = Math.max(
       since,
       ...acc.map((a) => a.updatedAt.getTime()),
-      ...txn.map((t) => t.updatedAt.getTime())
+      ...txn.map((t) => t.updatedAt.getTime()),
+      ...bud.map((b) => b.updatedAt.getTime()),
+      ...bil.map((b) => b.updatedAt.getTime())
     );
-    return { cursor, accounts: acc, transactions: txn };
+    return { cursor, accounts: acc, transactions: txn, budgets: bud, bills: bil };
   },
 };
 
