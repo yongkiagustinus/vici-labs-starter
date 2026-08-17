@@ -1,5 +1,9 @@
 import { usersRepo } from "@/lib/db/users-repo";
-import type { BillingProvider } from "./provider";
+import type {
+  BillingProvider,
+  Entitlement,
+  VerifyReceiptInput,
+} from "./provider";
 
 /**
  * StubBillingProvider — the default. Requires NO Stripe account or keys.
@@ -35,5 +39,22 @@ export class StubBillingProvider implements BillingProvider {
   }) {
     // No real portal in stub mode — bounce straight back.
     return { url: input.returnUrl };
+  }
+
+  async verifyReceipt(input: VerifyReceiptInput): Promise<Entitlement> {
+    // Dev/local: grant entitlement for any non-empty receipt so the mobile
+    // paywall flow is exercisable end-to-end without store credentials.
+    const entitled = input.receipt.trim().length > 0;
+    if (entitled) {
+      await usersRepo.setBilling(input.userId, { billingStatus: "active" });
+    }
+    return {
+      entitled,
+      status: entitled ? "active" : "free",
+      productId: input.productId ?? "stub_premium_monthly",
+      platform: input.platform,
+      expiresAt: null,
+      source: "stub",
+    };
   }
 }

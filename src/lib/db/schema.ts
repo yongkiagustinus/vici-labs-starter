@@ -34,3 +34,7 @@ export const users = pgTable("users", {
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
+
+// Product tables (Expense & Bill Tracker, VIC-6 locked scope). Re-exported here
+// so the Drizzle client and drizzle-kit migrations include them automatically.
+export * from "./finance-schema";

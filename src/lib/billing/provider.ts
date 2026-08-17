@@ -18,6 +18,35 @@ export interface PortalSession {
   url: string;
 }
 
+/** Mobile store platforms whose in-app-purchase receipts we verify. */
+export type StorePlatform = "ios" | "android";
+
+/**
+ * The subscription entitlement the mobile paywall reads. `entitled` is the
+ * single boolean the client gates premium features on; the rest is context for
+ * UI (renewal date, which product, where the grant came from).
+ */
+export interface Entitlement {
+  entitled: boolean;
+  /** free | active | expired | grace — mirrors the user's billingStatus. */
+  status: string;
+  productId: string | null;
+  platform: StorePlatform | "web" | null;
+  /** ISO expiry of the current period, when known. */
+  expiresAt: string | null;
+  /** Which provider produced this entitlement (e.g. "stub", "app_store"). */
+  source: string;
+}
+
+export interface VerifyReceiptInput {
+  userId: string;
+  platform: StorePlatform;
+  /** Base64 App Store receipt, or a Google Play purchase token. */
+  receipt: string;
+  /** The product/subscription id the receipt is expected to unlock. */
+  productId?: string;
+}
+
 export interface BillingProvider {
   readonly name: string;
 
@@ -36,4 +65,12 @@ export interface BillingProvider {
     customerId: string | null;
     returnUrl: string;
   }): Promise<PortalSession>;
+
+  /**
+   * Verify a StoreKit / Google Play receipt and, on success, persist the
+   * resulting entitlement on the user so the mobile paywall (and the
+   * entitlement endpoint) reflect it. Returns the entitlement either way — an
+   * invalid receipt yields `{ entitled: false }` rather than throwing.
+   */
+  verifyReceipt(input: VerifyReceiptInput): Promise<Entitlement>;
 }
