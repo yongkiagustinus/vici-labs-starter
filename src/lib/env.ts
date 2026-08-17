@@ -21,6 +21,11 @@ export const env = {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
     stripePriceId: process.env.STRIPE_PRICE_ID ?? "",
+    // Mobile in-app-purchase (StoreKit / Google Play) receipt verification.
+    // Left blank locally: the stub provider grants entitlement without them.
+    appleSharedSecret: process.env.APPLE_IAP_SHARED_SECRET ?? "",
+    googlePlayAccessToken: process.env.GOOGLE_PLAY_ACCESS_TOKEN ?? "",
+    androidPackageName: process.env.ANDROID_PACKAGE_NAME ?? "",
   },
 } as const;
 

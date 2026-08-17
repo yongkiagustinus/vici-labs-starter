@@ -1,5 +1,11 @@
 import { env } from "@/lib/env";
-import type { BillingProvider } from "./provider";
+import { usersRepo } from "@/lib/db/users-repo";
+import type {
+  BillingProvider,
+  Entitlement,
+  VerifyReceiptInput,
+} from "./provider";
+import { verifyStoreReceipt } from "./receipts";
 
 /**
  * StripeBillingProvider — a real implementation sketch using Stripe's REST API
@@ -67,5 +73,15 @@ export class StripeBillingProvider implements BillingProvider {
       return_url: input.returnUrl,
     });
     return { url: session.url as string };
+  }
+
+  async verifyReceipt(input: VerifyReceiptInput): Promise<Entitlement> {
+    // Mobile IAP is a separate rail from Stripe web billing — verify directly
+    // against Apple/Google, then persist the resulting entitlement.
+    const entitlement = await verifyStoreReceipt(input);
+    await usersRepo.setBilling(input.userId, {
+      billingStatus: entitlement.entitled ? "active" : "expired",
+    });
+    return entitlement;
   }
 }

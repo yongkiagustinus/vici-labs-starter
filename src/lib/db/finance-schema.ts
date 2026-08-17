@@ -181,6 +181,9 @@ export const bills = pgTable(
     reminderLeadDays: bigint("reminder_lead_days", { mode: "number" })
       .notNull()
       .default(3),
+    // Amount paid so far in minor units (supports partial payments). Equal to
+    // `amount` once fully settled; `paidAt` stamps the most recent payment.
+    paidAmount: bigint("paid_amount", { mode: "number" }).notNull().default(0),
     paidAt: timestamp("paid_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
@@ -192,6 +195,38 @@ export const bills = pgTable(
   },
   (t) => ({
     byHousehold: index("bill_household_idx").on(t.householdId),
+  })
+);
+
+/**
+ * Household invitations — the multi-user join flow. An owner/member mints a
+ * token; a partner redeems it to join the household as a member. Tokens are
+ * single-use (consumed on accept) and expire, so a leaked link has a small
+ * blast radius.
+ */
+export const householdInvites = pgTable(
+  "household_invites",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    householdId: uuid("household_id").notNull(),
+    // Who created the invite (attribution + audit).
+    invitedBy: uuid("invited_by").notNull(),
+    // Opaque, URL-safe secret the invitee presents to join.
+    token: varchar("token", { length: 64 }).notNull().unique(),
+    // Optional pin to a specific invitee email (null = anyone with the link).
+    email: varchar("email", { length: 320 }),
+    role: varchar("role", { length: 16 }).notNull().default("member"),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    // Set when redeemed; a non-null value means the token is spent.
+    acceptedAt: timestamp("accepted_at", { withTimezone: true }),
+    acceptedBy: uuid("accepted_by"),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => ({
+    byHousehold: index("invite_household_idx").on(t.householdId),
+    byToken: index("invite_token_idx").on(t.token),
   })
 );
 
@@ -218,6 +253,7 @@ export type Transaction = typeof transactions.$inferSelect;
 export type NewTransaction = typeof transactions.$inferInsert;
 export type Budget = typeof budgets.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
+export type HouseholdInvite = typeof householdInvites.$inferSelect;
 export type WaitlistEntry = typeof waitlist.$inferSelect;
 
 export const TRANSACTION_STATUSES = [
@@ -234,3 +270,11 @@ export const TRANSACTION_KINDS = [
   "iou",
 ] as const;
 export type TransactionKind = (typeof TRANSACTION_KINDS)[number];
+
+export const BILL_RECURRENCES = [
+  "none",
+  "weekly",
+  "monthly",
+  "yearly",
+] as const;
+export type BillRecurrence = (typeof BILL_RECURRENCES)[number];
